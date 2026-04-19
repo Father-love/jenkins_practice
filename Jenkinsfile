@@ -2,11 +2,9 @@ pipeline {
     agent any
 
     environment {
+        APP_NAME = ''
         APP_VERSION = ''
-    }
-
-    options {
-        timeout(time: 5, unit: 'MINUTES')
+        NEW_VERSION = '1.0.1'   // change version here
     }
 
     stages {
@@ -17,44 +15,60 @@ pipeline {
             }
         }
 
-        stage('Read package.json') {
+        stage('Read & Update package.json') {
             steps {
                 script {
+                    // Read package.json
                     def packageJson = readJSON file: 'package.json'
-                    
-                    // Set global environment variable
+
+                    // Get current values
+                    env.APP_NAME = packageJson.name
                     env.APP_VERSION = packageJson.version
-                    
-                    echo "Package version: ${env.APP_VERSION}"
+
+                    echo "Current Version: ${env.APP_VERSION}"
+
+                    // Update version
+                    packageJson.version = env.NEW_VERSION
+
+                    // Write back to file
+                    writeJSON file: 'package.json', json: packageJson, pretty: 4
+
+                    echo "Updated Version: ${env.NEW_VERSION}"
                 }
             }
         }
 
         stage('Build') {
             steps {
-                echo "Building version ${env.APP_VERSION}"
+                sh '''
+                echo "Building $APP_NAME version $NEW_VERSION"
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                echo "Testing version ${env.APP_VERSION}"
+                sh '''
+                echo "Running tests..."
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
-                echo "Deploying version ${env.APP_VERSION}"
+                sh '''
+                echo "Deploying $APP_NAME version $NEW_VERSION"
+                '''
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline successful for version ${env.APP_VERSION}"
+            echo "Pipeline SUCCESS for ${env.APP_NAME}:${env.NEW_VERSION}"
         }
         failure {
-            echo "Pipeline failed"
+            echo "Pipeline FAILED"
         }
     }
 }
