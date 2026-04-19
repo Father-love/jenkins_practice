@@ -1,39 +1,57 @@
 pipeline {
     agent any
 
+    environment {
+        APP_VERSION = ''
+    }
+
     options {
         timeout(time: 5, unit: 'MINUTES')
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                echo "Cloning the code"
+                checkout scm
+            }
+        }
+
+        stage('Read package.json') {
+            steps {
+                script {
+                    def packageJson = readJSON file: 'package.json'
+                    
+                    // Set global environment variable
+                    env.APP_VERSION = packageJson.version
+                    
+                    echo "Package version: ${env.APP_VERSION}"
+                }
             }
         }
 
         stage('Build') {
             steps {
-                echo "Building the code"
+                echo "Building version ${env.APP_VERSION}"
             }
         }
 
         stage('Test') {
             steps {
-                echo "Testing the code"
+                echo "Testing version ${env.APP_VERSION}"
             }
         }
 
         stage('Deploy') {
             steps {
-                echo "Deploying the application"
+                echo "Deploying version ${env.APP_VERSION}"
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline successful"
+            echo "Pipeline successful for version ${env.APP_VERSION}"
         }
         failure {
             echo "Pipeline failed"
