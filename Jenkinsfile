@@ -4,7 +4,10 @@ pipeline {
     environment {
         APP_NAME = ''
         APP_VERSION = ''
-        NEW_VERSION = '1.0.1'   // change version here
+        NEW_VERSION = '1.0.1'
+        REGION = "ap-southeast-2"
+        ACC_ID = "154586927356"   // ✅ fixed (12 digits)
+        REPO = "father-love-jenkins-practice"  // ✅ valid ECR repo
     }
 
     stages {
@@ -18,19 +21,15 @@ pipeline {
         stage('Read & Update package.json') {
             steps {
                 script {
-                    // Read package.json
                     def packageJson = readJSON file: 'package.json'
 
-                    // Get current values
                     env.APP_NAME = packageJson.name
                     env.APP_VERSION = packageJson.version
 
                     echo "Current Version: ${env.APP_VERSION}"
 
-                    // Update version
                     packageJson.version = env.NEW_VERSION
 
-                    // Write back to file
                     writeJSON file: 'package.json', json: packageJson, pretty: 4
 
                     echo "Updated Version: ${env.NEW_VERSION}"
@@ -40,18 +39,26 @@ pipeline {
 
         stage('Install dependencies') {
             steps {
-                script {
-                    sh '''
-                        npm install '''
-                }
+                sh 'npm install'
             }
         }
 
-        stage('Test') {
+        stage('Docker Build & Push') {
             steps {
-                sh '''
-                echo "Running tests..."
-                '''
+                withAWS(region: "${REGION}", credentials: 'aws-auth') {
+                    sh """
+                    aws ecr get-login-password --region ${REGION} | \
+                    docker login --username AWS --password-stdin ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com
+
+                    docker build -t ${REPO}:${NEW_VERSION} .
+
+                    docker tag ${REPO}:${NEW_VERSION} \
+                    ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:${NEW_VERSION}
+
+                    docker push \
+                    ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:${NEW_VERSION}
+                    """
+                }
             }
         }
 
