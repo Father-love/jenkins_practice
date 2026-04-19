@@ -54,7 +54,7 @@ pipeline {
             echo "Pipeline successful for version ${env.APP_VERSION}"
         }
         failure {
-            echo "Pipeline failed"
+            echo "Pipeline aborted"
         }
     }
 }
