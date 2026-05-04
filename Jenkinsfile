@@ -50,10 +50,9 @@ pipeline {
                     aws ecr get-login-password --region ${REGION} | \
                     docker login --username AWS --password-stdin ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com
 
-                    docker build -t ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/father-love-jenkins-practice:${NEW_VERSION}
+                    docker build -t ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:${NEW_VERSION} .
 
-                    docker push \
-                    ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:${NEW_VERSION}
+                    docker push ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:${NEW_VERSION}
                     """
                 }
             }
