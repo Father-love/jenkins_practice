@@ -5,7 +5,7 @@ pipeline {
         APP_NAME = ''
         APP_VERSION = ''
         NEW_VERSION = '1.0.1'
-        REGION = "ap-southeast-2"
+        REGION = "us-east-1"
         ACC_ID = "154586927356"   // ✅ fixed (12 digits)
         REPO = "father-love-jenkins-practice"  // ✅ valid ECR repo
     }
@@ -45,15 +45,12 @@ pipeline {
 
         stage('Docker Build & Push') {
             steps {
-                withAWS(region: "${REGION}", credentials: 'aws-auth') {
+                withAWS(region: "${REGION}", credentials: 'aws-creds') {
                     sh """
                     aws ecr get-login-password --region ${REGION} | \
                     docker login --username AWS --password-stdin ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com
 
-                    docker build -t ${REPO}:${NEW_VERSION} .
-
-                    docker tag ${REPO}:${NEW_VERSION} \
-                    ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:${NEW_VERSION}
+                    docker build -t ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/father-love-jenkins-practice:${NEW_VERSION}
 
                     docker push \
                     ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO}:${NEW_VERSION}
